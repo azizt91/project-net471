@@ -1,0 +1,26 @@
+{
+  "name": "NET471-isp-management",
+  "version": "1.0.1",
+  "description": "ISP Customer Management System with Google Sheets Integration",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo \"Error: no start script specified\" && exit 1",
+    "build": "echo 'No build step required for static files'"
+  },
+  "keywords": [
+    "isp",
+    "customer-management",
+    "google-sheets",
+    "billing",
+    "netlify"
+  ],
+  "author": "NET471",
+  "license": "MIT",
+  "dependencies": {
+    "googleapis": "^126.0.1",
+    "crypto": "1.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
