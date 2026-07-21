@@ -295,17 +295,22 @@ document.addEventListener('DOMContentLoaded', () => {
         setButtonLoading(saveBtn, true, isEditing ? 'Update' : 'Simpan');
         try {
             const response = await fetch(API_BASE_URL, {
-                method: 'POST', mode: 'no-cors',
+                method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     action: isEditing ? 'updatePelanggan' : 'addPelanggan',
                     rowNumber: currentEditingRowNumber, data: formData
                 })
             });
-            showSuccessNotification(isEditing ? 'Data berhasil diperbarui!' : 'Pelanggan baru berhasil ditambahkan!');
-            fetchData();
+            const result = await response.json();
+            if (result.error) {
+                showErrorNotification(result.error);
+            } else {
+                showSuccessNotification(isEditing ? 'Data berhasil diperbarui!' : 'Pelanggan baru berhasil ditambahkan!');
+                fetchData();
+            }
         } catch (error) {
-            showErrorNotification(`Gagal terhubung ke server.`);
+            showErrorNotification(`Gagal menyimpan data: ${error.message}`);
         } finally {
             setButtonLoading(saveBtn, false, isEditing ? 'Update' : 'Simpan');
         }

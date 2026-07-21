@@ -406,9 +406,9 @@ function addPelanggan(data) {
   if (lastRow > 1) {
     const lastIdplCell = sheet.getRange(lastRow, 1).getValue();
     const lastUserCell = sheet.getRange(lastRow, 3).getValue();
-    const lastIdNum = parseInt((lastIdplCell || 'CST000').replace('CST', ''), 10);
+    const lastIdNum = parseInt(String(lastIdplCell || 'CST000').replace('CST', ''), 10);
     nextIdpl = `CST${String(lastIdNum + 1).padStart(3, '0')}`;
-    const lastUserNum = parseInt((lastUserCell || 'user0').replace('user', ''), 10);
+    const lastUserNum = parseInt(String(lastUserCell || 'user0').replace('user', ''), 10);
     nextUser = `user${lastUserNum + 1}`;
   }
 
