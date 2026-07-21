@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? '<span class="px-3 py-1 rounded-full bg-[#078843] text-white text-xs font-semibold">Aktif</span>' 
                 : '<span class="px-3 py-1 rounded-full bg-red-500 text-white text-xs font-semibold">Cabut</span>';
             const statusPrefix = item.STATUS === 'AKTIF' ? 'Terdaftar' : 'Cabut';
-            const tanggalPasang = item['TANGGAL PASANG'] ? new Date(item['TANGGAL PASANG']).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+            const tanggalPasang = item['TANGGAL PASANG'] || 'N/A';
             
             const customerItem = document.createElement('div');
             customerItem.className = "flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 justify-between border-b border-gray-100 cursor-pointer hover:bg-gray-50";
@@ -207,6 +207,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('customer-status').value = customerData.STATUS || '';
         document.getElementById('customer-device').value = customerData['JENIS PERANGKAT'] || '';
         document.getElementById('customer-ip').value = customerData['IP STATIC / PPOE'] || '';
+        
+        let rawDate = customerData['TANGGAL PASANG'] || '';
+        // Konversi dari format lokal ke YYYY-MM-DD untuk input type=date
+        let dateVal = '';
+        if (rawDate) {
+            let parts = rawDate.split('/');
+            if(parts.length === 3) dateVal = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            else {
+                let d = new Date(rawDate);
+                if (!isNaN(d)) dateVal = d.toISOString().split('T')[0];
+            }
+        }
+        document.getElementById('customer-date').value = dateVal;
         
         lastView = 'detail'; // Jika batal, kembali ke detail
         switchView('form');
@@ -267,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'idpl': customer.IDPL, 'nama': customer.NAMA, 'alamat': customer.ALAMAT,
             'gender': customer['JENIS KELAMIN'], 'whatsapp': customer.WHATSAPP, 'paket': customer.PAKET,
             'tagihan': customer.TAGIHAN ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(customer.TAGIHAN) : '-',
-            'status': customer.STATUS, 'tanggal-pasang': customer['TANGGAL PASANG'] ? new Date(customer['TANGGAL PASANG']).toLocaleDateString('id-ID') : '-',
+            'status': customer.STATUS, 'tanggal-pasang': customer['TANGGAL PASANG'] || '-',
             'jenis-perangkat': customer['JENIS PERANGKAT'], 'ip-static': customer['IP STATIC / PPOE']
         };
         for (const key in details) {
@@ -289,7 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             whatsapp: document.getElementById('customer-whatsapp').value, jenisKelamin: document.getElementById('customer-gender').value,
             paket: document.getElementById('customer-package').value, tagihan: document.getElementById('customer-bill').value,
             status: document.getElementById('customer-status').value, jenisPerangkat: document.getElementById('customer-device').value,
-            ipStatic: document.getElementById('customer-ip').value
+            ipStatic: document.getElementById('customer-ip').value,
+            tanggalPasang: document.getElementById('customer-date').value
         };
 
         setButtonLoading(saveBtn, true, isEditing ? 'Update' : 'Simpan');

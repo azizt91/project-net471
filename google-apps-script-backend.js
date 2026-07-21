@@ -399,23 +399,48 @@ function addPelanggan(data) {
   const sheet = ss.getSheetByName('DATA');
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
 
-  // Menentukan IDPL dan User baru
-  const lastRow = sheet.getLastRow();
+  // Menentukan IDPL dan User baru dengan mencari nilai maksimum
   let nextIdpl = 'CST001';
   let nextUser = 'user1';
-  if (lastRow > 1) {
-    const lastIdplCell = sheet.getRange(lastRow, 1).getValue();
-    const lastUserCell = sheet.getRange(lastRow, 3).getValue();
-    const lastIdNum = parseInt(String(lastIdplCell || 'CST000').replace('CST', ''), 10);
-    nextIdpl = `CST${String(lastIdNum + 1).padStart(3, '0')}`;
-    const lastUserNum = parseInt(String(lastUserCell || 'user0').replace('user', ''), 10);
-    nextUser = `user${lastUserNum + 1}`;
+  const dataAll = sheet.getDataRange().getValues();
+  if (dataAll.length > 1) {
+    let maxCst = 0;
+    let maxUser = 0;
+    for (let i = 1; i < dataAll.length; i++) {
+      const idplVal = String(dataAll[i][0]).trim();
+      if (idplVal.startsWith('CST')) {
+        const num = parseInt(idplVal.replace('CST', ''), 10);
+        if (!isNaN(num) && num > maxCst) maxCst = num;
+      }
+      const userVal = String(dataAll[i][2]).trim();
+      if (userVal.startsWith('user')) {
+        const num = parseInt(userVal.replace('user', ''), 10);
+        if (!isNaN(num) && num > maxUser) maxUser = num;
+      }
+    }
+    nextIdpl = `CST${String(maxCst + 1).padStart(3, '0')}`;
+    nextUser = `user${maxUser + 1}`;
   }
 
   // Menentukan URL Foto Otomatis
   const fotoUrl = data.jenisKelamin === 'PEREMPUAN'
     ? 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-1.png'
     : 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-2.png';
+
+  // Format tanggal pasang
+  let tglPasang = data.tanggalPasang;
+  if (!tglPasang) {
+    tglPasang = new Date().toLocaleDateString('id-ID');
+  } else {
+    // Ubah format YYYY-MM-DD ke format lokal (opsional) atau biarkan
+    // Sebagai contoh kita simpan apa adanya atau format ulang:
+    const d = new Date(tglPasang);
+    if (!isNaN(d)) {
+      // Format seperti "10 Januari 2021" jika didukung, atau DD/MM/YYYY
+      const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      tglPasang = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+  }
 
   // Membuat objek data baru yang lengkap
   const newRowObject = {
@@ -424,20 +449,21 @@ function addPelanggan(data) {
     'USER': nextUser,
     'PASSWORD': '1234',
     'LEVEL': 'USER',
+    'KODE': 2,
     'ALAMAT': data.alamat,
     'JENIS KELAMIN': data.jenisKelamin,
     'WHATSAPP': data.whatsapp,
     'PAKET': data.paket,
     'TAGIHAN': data.tagihan,
     'STATUS': data.status,
-    'TANGGAL PASANG': new Date().toLocaleDateString('id-ID'),
+    'TANGGAL PASANG': tglPasang,
     'JENIS PERANGKAT': data.jenisPerangkat,
     'IP STATIC / PPOE': data.ipStatic || '',
     'FOTO': fotoUrl
   };
 
   // Mengubah objek menjadi array sesuai urutan header di sheet
-  const newRowArray = headers.map(header => newRowObject[header.trim()] || '');
+  const newRowArray = headers.map(header => newRowObject[header.trim()] !== undefined ? newRowObject[header.trim()] : '');
 
   sheet.appendRow(newRowArray);
   return { message: 'Pelanggan berhasil ditambahkan!' };
@@ -466,6 +492,16 @@ function updatePelanggan(rowNumber, data) {
     originalRowObject[header.trim()] = originalRowValues[i];
   });
 
+    // Format tanggal pasang
+    let tglPasang = data.tanggalPasang;
+    if (tglPasang) {
+      const d = new Date(tglPasang);
+      if (!isNaN(d)) {
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        tglPasang = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      }
+    }
+
   // Menimpa data lama dengan data baru dari form
   const updatedRowObject = {
     ...originalRowObject,
@@ -480,6 +516,10 @@ function updatePelanggan(rowNumber, data) {
     'IP STATIC / PPOE': data.ipStatic || '',
     'FOTO': fotoUrl
   };
+
+  if (tglPasang) {
+      updatedRowObject['TANGGAL PASANG'] = tglPasang;
+  }
 
   // Mengubah kembali menjadi array untuk disimpan ke sheet
   const updatedRowArray = headers.map(header => updatedRowObject[header.trim()] || '');
