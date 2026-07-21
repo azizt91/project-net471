@@ -685,3 +685,36 @@ function getSpecificCustomerData(idpl) {
     riwayatLunas: lunas
   };
 }
+
+/**
+ * Menambahkan baris data baru secara generik ke sheet tertentu.
+ * @param {string} sheetName - Nama sheet
+ * @param {Object} data - Data yang akan ditambahkan
+ * @returns {Object} - Hasil
+ */
+function addRow(sheetName, data) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error(`Sheet ${sheetName} tidak ditemukan`);
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+  const newRow = headers.map(header => data[header] !== undefined ? data[header] : '');
+  sheet.appendRow(newRow);
+  return { message: 'Data berhasil ditambahkan!' };
+}
+
+/**
+ * Memperbarui baris data secara generik.
+ * @param {string} sheetName - Nama sheet
+ * @param {number} rowNumber - Nomor baris
+ * @param {Object} data - Data baru
+ * @returns {Object} - Hasil
+ */
+function updateRow(sheetName, rowNumber, data) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error(`Sheet ${sheetName} tidak ditemukan`);
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+  const updatedRow = headers.map(header => data[header] !== undefined ? data[header] : '');
+  sheet.getRange(rowNumber, 1, 1, updatedRow.length).setValues([updatedRow]);
+  return { message: 'Data berhasil diperbarui!' };
+}
