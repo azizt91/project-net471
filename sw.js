@@ -71,6 +71,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - Serve cached content when offline
 self.addEventListener('fetch', (event) => {
+  // Bypass Service Worker untuk API Google Apps Script dan request POST
+  if (event.request.url.includes('script.google.com') || event.request.method === 'POST') {
+    return; // Browser akan menanganinya secara native
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

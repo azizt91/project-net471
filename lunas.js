@@ -297,11 +297,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const skeletonItem = document.createElement('div');
             skeletonItem.className = 'flex items-center gap-4 bg-[#f9f8fb] px-4 min-h-[72px] py-2 justify-between border-b border-gray-200';
             skeletonItem.innerHTML = `
+                <div class="w-12 shrink-0">
+                    <div style="height: 3rem; width: 2.5rem; background-color: #e0e0e0; border-radius: 4px; animation: skeleton-loading 1.5s infinite; margin: 0 auto;"></div>
+                </div>
                 <div class="flex flex-col justify-center flex-1 gap-2">
                     <div style="height: 1rem; background-color: #e0e0e0; border-radius: 4px; width: 75%; animation: skeleton-loading 1.5s infinite;"></div>
                     <div style="height: 0.75rem; background-color: #e0e0e0; border-radius: 4px; width: 50%; animation: skeleton-loading 1.5s infinite;"></div>
                 </div>
-                <div class="shrink-0" style="height: 1rem; background-color: #e0e0e0; border-radius: 4px; width: 25%; animation: skeleton-loading 1.5s infinite;"></div>
+                <div class="shrink-0 flex items-center gap-1.5">
+                    <div class="flex flex-col items-end mr-1 gap-1">
+                        <div style="height: 0.75rem; background-color: #e0e0e0; border-radius: 4px; width: 3rem; animation: skeleton-loading 1.5s infinite;"></div>
+                        <div style="height: 0.75rem; background-color: #e0e0e0; border-radius: 4px; width: 4rem; animation: skeleton-loading 1.5s infinite;"></div>
+                    </div>
+                    <div style="height: 1.75rem; width: 1.75rem; background-color: #e0e0e0; border-radius: 0.5rem; animation: skeleton-loading 1.5s infinite;"></div>
+                    <div style="height: 1.75rem; width: 1.75rem; background-color: #e0e0e0; border-radius: 0.5rem; animation: skeleton-loading 1.5s infinite;"></div>
+                </div>
             `;
             invoiceList.appendChild(skeletonItem);
         }

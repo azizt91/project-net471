@@ -35,7 +35,7 @@
       style='font-family: Manrope, "Noto Sans", sans-serif;'
     >
       <!-- Main Content with bottom padding for fixed navigation -->
-      <div class="flex-1">
+      <div class="flex-1 pb-[120px]">
         <header class="flex items-center bg-[#f9f8fb] p-4 pb-2 justify-between">
           <h2 class="text-[#110e1b] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Tagihan</h2>
         </header>
@@ -152,6 +152,36 @@
           </a>
         </div>
       </footer>
+    </div>
+
+    <!-- Modal Buat Tagihan -->
+    <div id="invoice-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 hidden backdrop-blur-sm transition-opacity">
+      <div class="bg-white rounded-2xl w-[90%] max-w-sm overflow-hidden shadow-2xl transform transition-transform">
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-[#110e1b] mb-4 text-center">Buat Tagihan Baru</h3>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#625095] mb-1">Bulan</label>
+              <select id="invoice-month" class="w-full rounded-lg bg-[#eae8f3] border-none focus:ring-2 focus:ring-[#5324e0] h-12 px-4 text-[#110e1b]">
+                <!-- Dikosongkan, akan diisi via JS -->
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-[#625095] mb-1">Tahun</label>
+              <select id="invoice-year" class="w-full rounded-lg bg-[#eae8f3] border-none focus:ring-2 focus:ring-[#5324e0] h-12 px-4 text-[#110e1b]">
+                <!-- Dikosongkan, akan diisi via JS -->
+              </select>
+            </div>
+          </div>
+          
+          <div class="mt-6 flex gap-3">
+            <button id="cancel-invoice-btn" class="flex-1 h-12 rounded-lg font-bold text-[#625095] bg-[#eae8f3] hover:bg-[#d6d1e6] transition-colors">Batal</button>
+            <button id="confirm-invoice-btn" class="flex-1 h-12 rounded-lg font-bold text-white bg-gradient-to-r from-[#667eea] to-[#5324e0] hover:shadow-lg transition-all">Buat</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="config.js"></script>

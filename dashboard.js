@@ -102,16 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon: '💸'
             },
             { 
-                label: 'Pelanggan Aktif', 
-                value: stats.activeCustomers || 0, 
+                label: 'Jumlah Pelanggan', 
+                value: (stats.activeCustomers || 0) + (stats.inactiveCustomers || 0), 
                 gradient: 'gradient-card-4',
                 icon: '👥'
-            },
-            { 
-                label: 'Pelanggan Tidak Aktif', 
-                value: stats.inactiveCustomers || 0, 
-                gradient: 'gradient-card-5',
-                icon: '😴'
             },
             { 
                 label: 'Belum Dibayar', 
@@ -172,25 +166,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function showLoading() {
         cardsContainer.innerHTML = '';
         
-        // Create 7 mobile-optimized skeleton cards
-        for (let i = 0; i < 7; i++) {
+        // Create 6 mobile-optimized skeleton cards
+        for (let i = 0; i < 6; i++) {
             const skeletonCard = document.createElement('div');
-            skeletonCard.className = 'skeleton-card glass-card rounded-2xl p-4 min-h-[120px]';
+            skeletonCard.className = 'skeleton-card bg-gray-100 animate-pulse rounded-3xl p-6 min-h-[140px]';
             
             // First card (profit) full width
             if (i === 0) {
                 skeletonCard.classList.add('col-span-2');
-                skeletonCard.className += ' min-h-[100px]';
             }
             
             skeletonCard.innerHTML = `
-                <div class="flex items-start justify-between mb-2">
-                    <div class="skeleton-line w-6 h-6 rounded-full"></div>
-                    <div class="skeleton-line w-4 h-4 rounded-full"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200"></div>
                 </div>
-                <div class="flex-1">
-                    <div class="skeleton-line h-3 bg-gray-200 rounded w-2/3 mb-1"></div>
-                    <div class="skeleton-line h-5 bg-gray-300 rounded w-3/4"></div>
+                <div class="flex-1 mt-4">
+                    <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div class="h-8 bg-gray-300 rounded w-3/4"></div>
                 </div>
             `;
             cardsContainer.appendChild(skeletonCard);

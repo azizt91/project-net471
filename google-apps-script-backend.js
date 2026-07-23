@@ -20,6 +20,7 @@ function createMonthlyInvoices() {
 
   const dataRange = dataSheet.getDataRange();
   const dataValues = dataRange.getValues();
+  const tagihanHeaders = tagihanSheet.getRange(1, 1, 1, tagihanSheet.getLastColumn()).getValues()[0];
 
   // Baris pertama adalah header
   if (dataValues.length < 1) {
@@ -33,18 +34,14 @@ function createMonthlyInvoices() {
   // di bawah ini SESUAI PERSIS dengan nama header di baris pertama sheet 'DATA' Anda.
   const idpelColIdx = headers.indexOf("IDPL");
   const namaColIdx = headers.indexOf("NAMA");
-  const noHpColIdx = headers.indexOf("WHATSAPP");
   const hargaColIdx = headers.indexOf("TAGIHAN");
-  const tglPasangColIdx = headers.indexOf("TANGGAL PASANG");
   const statusDataColIdx = headers.indexOf("STATUS"); // Kolom STATUS di sheet DATA
 
-  // Periksa apakah semua kolom yang dibutuhkan ditemukan
+  // Periksa apakah semua kolom utama yang dibutuhkan ditemukan
   const missingCols = [];
   if (idpelColIdx === -1) missingCols.push("IDPL");
   if (namaColIdx === -1) missingCols.push("NAMA");
-  if (noHpColIdx === -1) missingCols.push("WHATSAPP");
   if (hargaColIdx === -1) missingCols.push("TAGIHAN");
-  if (tglPasangColIdx === -1) missingCols.push("TANGGAL PASANG");
   if (statusDataColIdx === -1) missingCols.push("STATUS (di sheet DATA)");
 
   if (missingCols.length > 0) {
@@ -75,25 +72,22 @@ function createMonthlyInvoices() {
     if (typeof statusPelanggan === 'string' && statusPelanggan.trim().toLowerCase() === "aktif") {
       const idpl = row[idpelColIdx];
       const nama = row[namaColIdx];
-      const whatsapp = row[noHpColIdx];
       const tagihanValue = row[hargaColIdx];
-      const tanggalPasang = row[tglPasangColIdx];
 
-      // Buat baris baru untuk sheet 'Tagihan'
-      // Urutan kolom: ID, IDPL, NAMA, WHATSAPP, TAGIHAN, BULAN, TAHUN, PERIODE TAGIHAN, STATUS, TANGGAL BAYAR, TANGGAL PASANG
-      const newRowForTagihan = [
-        Utilities.getUuid(), // ID (Kolom ID di Tagihan diisi dengan UUID)
-        idpl,
-        nama,
-        whatsapp,
-        tagihanValue,
-        bulanTagihan,
-        tahunTagihan,
-        periodeTagihan,
-        "BELUM LUNAS", // STATUS untuk tagihan baru
-        "", // TANGGAL BAYAR (dikosongkan)
-        tanggalPasang
-      ];
+      // Buat objek untuk baris baru
+      const newRowObject = {
+        'ID': Utilities.getUuid(),
+        'IDPL': idpl,
+        'NAMA': nama,
+        'TAGIHAN': tagihanValue,
+        'BULAN': bulanTagihan,
+        'TAHUN': tahunTagihan,
+        'PERIODE TAGIHAN': periodeTagihan,
+        'STATUS': "BELUM LUNAS",
+        'TANGGAL BAYAR': ""
+      };
+      
+      const newRowForTagihan = tagihanHeaders.map(header => newRowObject[header.trim()] || "");
       rowsToAdd.push(newRowForTagihan);
     }
   }
@@ -225,7 +219,7 @@ function doPost(e) {
         break;
       // --- PENAMBAHAN ADA DI SINI ---
       case 'createInvoices':
-        result = createMonthlyInvoices();
+        result = createMonthlyInvoices(request.bulan, request.tahun);
         break;
 
       // --- MANAJEMEN PAKET ---
@@ -258,12 +252,12 @@ function doPost(e) {
  * Membuat tagihan bulanan untuk semua pelanggan aktif yang belum ditagih.
  * @returns {Object} - Pesan sukses atau informasi.
  */
-function createMonthlyInvoices() {
-  // 1. Dapatkan bulan dan tahun saat ini
+function createMonthlyInvoices(reqBulan, reqTahun) {
+  // 1. Dapatkan bulan dan tahun
   const now = new Date();
-  const currentYear = now.getFullYear();
+  const currentYear = reqTahun ? parseInt(reqTahun) : now.getFullYear();
   const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-  const currentMonthName = namaBulan[now.getMonth()];
+  const currentMonthName = reqBulan ? reqBulan : namaBulan[now.getMonth()];
 
   // 2. Baca semua data yang diperlukan dari sheet
   const pelangganData = readSheetData('DATA');
@@ -422,26 +416,6 @@ function addPelanggan(data) {
     nextUser = `user${maxUser + 1}`;
   }
 
-  // Menentukan URL Foto Otomatis
-  const fotoUrl = data.jenisKelamin === 'PEREMPUAN'
-    ? 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-1.png'
-    : 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-2.png';
-
-  // Format tanggal pasang
-  let tglPasang = data.tanggalPasang;
-  if (!tglPasang) {
-    tglPasang = new Date().toLocaleDateString('id-ID');
-  } else {
-    // Ubah format YYYY-MM-DD ke format lokal (opsional) atau biarkan
-    // Sebagai contoh kita simpan apa adanya atau format ulang:
-    const d = new Date(tglPasang);
-    if (!isNaN(d)) {
-      // Format seperti "10 Januari 2021" jika didukung, atau DD/MM/YYYY
-      const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-      tglPasang = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-    }
-  }
-
   // Membuat objek data baru yang lengkap
   const newRowObject = {
     'IDPL': nextIdpl,
@@ -451,15 +425,9 @@ function addPelanggan(data) {
     'LEVEL': 'USER',
     'KODE': 2,
     'ALAMAT': data.alamat,
-    'JENIS KELAMIN': data.jenisKelamin,
-    'WHATSAPP': data.whatsapp,
     'PAKET': data.paket,
     'TAGIHAN': data.tagihan,
-    'STATUS': data.status,
-    'TANGGAL PASANG': tglPasang,
-    'JENIS PERANGKAT': data.jenisPerangkat,
-    'IP STATIC / PPOE': data.ipStatic || '',
-    'FOTO': fotoUrl
+    'STATUS': 'AKTIF'
   };
 
   // Mengubah objek menjadi array sesuai urutan header di sheet
@@ -481,45 +449,20 @@ function updatePelanggan(rowNumber, data) {
   const range = sheet.getRange(rowNumber, 1, 1, headers.length);
   const originalRowValues = range.getValues()[0];
 
-  // Menentukan URL Foto Otomatis
-  const fotoUrl = data.jenisKelamin === 'PEREMPUAN'
-    ? 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-1.png'
-    : 'https://sb-admin-pro.startbootstrap.com/assets/img/illustrations/profiles/profile-2.png';
-
   // Membuat objek dari data baris yang ada di sheet
   let originalRowObject = {};
   headers.forEach((header, i) => {
     originalRowObject[header.trim()] = originalRowValues[i];
   });
 
-    // Format tanggal pasang
-    let tglPasang = data.tanggalPasang;
-    if (tglPasang) {
-      const d = new Date(tglPasang);
-      if (!isNaN(d)) {
-        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-        tglPasang = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-      }
-    }
-
   // Menimpa data lama dengan data baru dari form
   const updatedRowObject = {
     ...originalRowObject,
     'NAMA': data.nama,
     'ALAMAT': data.alamat,
-    'JENIS KELAMIN': data.jenisKelamin,
-    'WHATSAPP': data.whatsapp,
     'PAKET': data.paket,
-    'TAGIHAN': data.tagihan,
-    'STATUS': data.status,
-    'JENIS PERANGKAT': data.jenisPerangkat,
-    'IP STATIC / PPOE': data.ipStatic || '',
-    'FOTO': fotoUrl
+    'TAGIHAN': data.tagihan
   };
-
-  if (tglPasang) {
-      updatedRowObject['TANGGAL PASANG'] = tglPasang;
-  }
 
   // Mengubah kembali menjadi array untuk disimpan ke sheet
   const updatedRowArray = headers.map(header => updatedRowObject[header.trim()] || '');

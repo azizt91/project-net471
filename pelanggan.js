@@ -19,14 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
         detail: document.getElementById('detail-view'),
         form: document.getElementById('form-view')
     };
-    
+
     const customerList = document.getElementById('customer-list');
     const searchInput = document.getElementById('search-input');
-    const filterButtons = {
-        all: document.getElementById('filter-all'),
-        active: document.getElementById('filter-active'),
-        inactive: document.getElementById('filter-inactive')
-    };
     const addCustomerBtn = document.getElementById('add-customer-btn');
     const customerForm = document.getElementById('customer-form');
 
@@ -53,17 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===============================================
     function initializeEventListeners() {
         searchInput.addEventListener('input', renderCustomerList);
-        Object.keys(filterButtons).forEach(key => {
-            filterButtons[key].addEventListener('click', () => setFilter(key));
-        });
-
         addCustomerBtn.addEventListener('click', openAddForm);
         customerForm.addEventListener('submit', handleFormSubmit);
 
         // Tombol Kembali
         document.getElementById('back-from-detail').addEventListener('click', () => switchView('list'));
         document.getElementById('back-from-form').addEventListener('click', () => {
-             // Kembali ke view sebelumnya (bisa list atau detail)
+            // Kembali ke view sebelumnya (bisa list atau detail)
             if (confirm('Yakin ingin kembali? Perubahan yang belum disimpan akan hilang.')) {
                 switchView(lastView);
             }
@@ -96,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             let rawData = await response.json();
-            
+
             if (paketResponse.ok) {
                 const paketData = await paketResponse.json();
                 paketOptions = {};
@@ -112,40 +103,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (rawData.error) throw new Error(rawData.error);
             if (!Array.isArray(rawData)) throw new TypeError('Format data tidak valid');
-            
+
             allData = rawData
                 .filter(item => item.LEVEL === 'USER')
                 .sort((a, b) => b.rowNumber - a.rowNumber);
-            
-            setFilter('all');
+
+            renderCustomerList();
         } catch (error) {
             console.error('Error fetching data:', error);
             customerList.innerHTML = `<p class="text-center text-red-500 p-4">Gagal memuat data: ${error.message}</p>`;
         }
     }
 
-    function setFilter(filterType) {
-        currentFilter = filterType;
-        Object.values(filterButtons).forEach(btn => {
-            btn.classList.remove('bg-[#501ee6]', 'text-white');
-            btn.classList.add('bg-[#eae8f3]', 'text-[#110e1b]');
-        });
-        filterButtons[filterType].classList.remove('bg-[#eae8f3]', 'text-[#110e1b]');
-        filterButtons[filterType].classList.add('bg-[#501ee6]', 'text-white');
-        renderCustomerList();
-    }
-
     function renderCustomerList() {
         const searchTerm = searchInput.value.toLowerCase();
         let data = allData;
 
-        if (currentFilter === 'active') data = data.filter(item => item.STATUS === 'AKTIF');
-        if (currentFilter === 'inactive') data = data.filter(item => item.STATUS === 'NONAKTIF');
-
         const filteredData = data.filter(item =>
             Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm))
         );
-        
+
         customerList.innerHTML = ''; // Pastikan skeleton dihapus sebelum render
         if (filteredData.length === 0) {
             customerList.innerHTML = `<p class="text-center text-gray-500 p-4">Tidak ada pelanggan ditemukan.</p>`;
@@ -153,15 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         filteredData.forEach(item => {
-            const statusBadge = item.STATUS === 'AKTIF' 
-                ? '<span class="px-3 py-1 rounded-full bg-[#078843] text-white text-xs font-semibold">Aktif</span>' 
-                : '<span class="px-3 py-1 rounded-full bg-red-500 text-white text-xs font-semibold">Cabut</span>';
-            const statusPrefix = item.STATUS === 'AKTIF' ? 'Terdaftar' : 'Cabut';
-            const tanggalPasang = item['TANGGAL PASANG'] || 'N/A';
-            
+            const paketName = item.PAKET || '-';
+
             const customerItem = document.createElement('div');
             customerItem.className = "flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 justify-between border-b border-gray-100 cursor-pointer hover:bg-gray-50";
-            customerItem.innerHTML = `<div class="flex items-center gap-4"><div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14" style="background-image: url('${item.FOTO || ''}');"></div><div class="flex flex-col justify-center"><p class="text-[#110e1b] text-base font-medium">${item.NAMA}</p><p class="text-[#625095] text-sm">${statusPrefix} ${tanggalPasang}</p></div></div><div class="shrink-0"><div class="flex items-center justify-center">${statusBadge}</div></div>`;
+            customerItem.innerHTML = `<div class="flex items-center gap-4"><div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14 flex items-center justify-center bg-[#501ee6] text-white font-bold text-xl">${item.NAMA.charAt(0)}</div><div class="flex flex-col justify-center"><p class="text-[#110e1b] text-base font-medium">${item.NAMA}</p><div class="mt-1"><span class="px-2 py-0.5 bg-[#eae8f3] text-[#625095] rounded-full text-xs font-semibold">${paketName}</span></div></div></div><div class="shrink-0"><div class="flex items-center justify-center"></div></div>`;
             customerItem.addEventListener('click', () => openDetailView(item)); // <-- Mengarah ke view detail
             customerList.appendChild(customerItem);
         });
@@ -182,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const price = paketOptions[event.target.value] || '0';
         document.getElementById('customer-bill').value = price;
     }
-    
+
     function openAddForm() {
         customerForm.reset();
         currentEditingRowNumber = null;
@@ -191,40 +164,24 @@ document.addEventListener('DOMContentLoaded', () => {
         lastView = 'list'; // Jika batal, kembali ke list
         switchView('form');
     }
-    
+
     function openEditForm(customerData) {
         customerForm.reset();
         currentEditingRowNumber = customerData.rowNumber;
         document.getElementById('modal-title').textContent = 'Edit Pelanggan';
         document.getElementById('save-btn-text').textContent = 'Update';
-        
+
         document.getElementById('customer-name').value = customerData.NAMA || '';
         document.getElementById('customer-address').value = customerData.ALAMAT || '';
-        document.getElementById('customer-whatsapp').value = customerData.WHATSAPP || '';
-        document.getElementById('customer-gender').value = customerData['JENIS KELAMIN'] || '';
         document.getElementById('customer-package').value = customerData.PAKET || '';
         document.getElementById('customer-bill').value = String(customerData.TAGIHAN || '').replace(/[^0-9]/g, '');
-        document.getElementById('customer-status').value = customerData.STATUS || '';
-        document.getElementById('customer-device').value = customerData['JENIS PERANGKAT'] || '';
-        document.getElementById('customer-ip').value = customerData['IP STATIC / PPOE'] || '';
-        
-        let rawDate = customerData['TANGGAL PASANG'] || '';
-        // Konversi dari format lokal ke YYYY-MM-DD untuk input type=date
-        let dateVal = '';
-        if (rawDate) {
-            let parts = rawDate.split('/');
-            if(parts.length === 3) dateVal = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-            else {
-                let d = new Date(rawDate);
-                if (!isNaN(d)) dateVal = d.toISOString().split('T')[0];
-            }
-        }
-        document.getElementById('customer-date').value = dateVal;
-        
+
+
+
         lastView = 'detail'; // Jika batal, kembali ke detail
         switchView('form');
     }
-    
+
     function handleEditFromDetailView() {
         const customerData = allData.find(item => item.rowNumber === currentEditingRowNumber);
         if (customerData) openEditForm(customerData);
@@ -250,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowNumber: currentEditingRowNumber
                 })
             });
-            
+
             showSuccessNotification('Pelanggan berhasil dihapus');
             fetchData();
         } catch (error) {
@@ -265,28 +222,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function openDetailView(customer) {
         currentEditingRowNumber = customer.rowNumber;
         const profileImage = document.getElementById('detail-profile-image');
-        if (customer.FOTO && customer.FOTO.startsWith('http')) {
-            profileImage.style.backgroundImage = `url('${customer.FOTO}')`;
-            profileImage.innerHTML = '';
-        } else {
-            profileImage.style.backgroundImage = 'none';
-            profileImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256" class="text-gray-500"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path></svg>`;
-        }
-        
+        profileImage.style.backgroundImage = 'none';
+        profileImage.className = 'bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-24 w-24 flex items-center justify-center bg-[#501ee6] text-white font-bold text-4xl';
+        profileImage.textContent = customer.NAMA ? customer.NAMA.charAt(0).toUpperCase() : '-';
+
         document.getElementById('detail-customer-name').textContent = customer.NAMA || '-';
         document.getElementById('detail-customer-id').textContent = customer.IDPL || '-';
-        
+
         const details = {
             'idpl': customer.IDPL, 'nama': customer.NAMA, 'alamat': customer.ALAMAT,
-            'gender': customer['JENIS KELAMIN'], 'whatsapp': customer.WHATSAPP, 'paket': customer.PAKET,
-            'tagihan': customer.TAGIHAN ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(customer.TAGIHAN) : '-',
-            'status': customer.STATUS, 'tanggal-pasang': customer['TANGGAL PASANG'] || '-',
-            'jenis-perangkat': customer['JENIS PERANGKAT'], 'ip-static': customer['IP STATIC / PPOE']
+            'paket': customer.PAKET,
+            'tagihan': customer.TAGIHAN ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(customer.TAGIHAN) : '-'
         };
         for (const key in details) {
-            document.getElementById(`detail-${key}`).textContent = details[key] || '-';
+            const el = document.getElementById(`detail-${key}`);
+            if (el) el.textContent = details[key] || '-';
         }
-        
+
         loadUnpaidBills(customer.IDPL);
         switchView('detail');
     }
@@ -298,12 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isEditing && !confirm('Yakin ingin menyimpan perubahan?')) return;
 
         const formData = {
-            nama: document.getElementById('customer-name').value, alamat: document.getElementById('customer-address').value,
-            whatsapp: document.getElementById('customer-whatsapp').value, jenisKelamin: document.getElementById('customer-gender').value,
-            paket: document.getElementById('customer-package').value, tagihan: document.getElementById('customer-bill').value,
-            status: document.getElementById('customer-status').value, jenisPerangkat: document.getElementById('customer-device').value,
-            ipStatic: document.getElementById('customer-ip').value,
-            tanggalPasang: document.getElementById('customer-date').value
+            nama: document.getElementById('customer-name').value, 
+            alamat: document.getElementById('customer-address').value,
+            paket: document.getElementById('customer-package').value, 
+            tagihan: document.getElementById('customer-bill').value
         };
 
         setButtonLoading(saveBtn, true, isEditing ? 'Update' : 'Simpan');
@@ -346,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}?action=getTagihan`);
             const responseData = await response.json();
             const customerUnpaidBills = responseData.filter(bill => bill.IDPL === customerId && bill.STATUS !== 'LUNAS');
-            
+
             if (customerUnpaidBills.length > 0) {
                 unpaidBillsList.innerHTML = '';
                 customerUnpaidBills.forEach(bill => {
@@ -359,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             unpaidBillsList.innerHTML = `<p class="text-sm text-red-500 px-4">Gagal memuat tagihan.</p>`;
         }
     }
-    
+
     function setButtonLoading(button, isLoading, originalText) {
         const span = button.querySelector('span');
         if (span) {
